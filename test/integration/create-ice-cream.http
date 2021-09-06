@@ -1,0 +1,17 @@
+POST https://ahgmn0au48.execute-api.us-east-1.amazonaws.com/prod/ HTTP/1.1
+content-type: application/json
+
+{
+    "name": "Vanilla",
+    "ingredients": [
+      {
+        "name": "Vaniilla Bean"
+      },
+      {
+        "name": "Milk"
+      },
+      {
+        "name": "Sugar"
+      }
+    ]
+}

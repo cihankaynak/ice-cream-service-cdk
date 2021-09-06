@@ -1,9 +1,12 @@
-import * as cdk from '@aws-cdk/core';
+import * as cdk from "@aws-cdk/core";
+import * as iceCreamServiceConstruct from "./iceCreamServiceConstruct";
 
 export class IceCreamServiceCdkStack extends cdk.Stack {
   constructor(scope: cdk.Construct, id: string, props?: cdk.StackProps) {
     super(scope, id, props);
-
-    // The code that defines your stack goes here
+    new iceCreamServiceConstruct.IceCreamServiceConstruct(
+      this,
+      "IceCreamService"
+    );
   }
 }

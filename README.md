@@ -1,14 +1,14 @@
-# Welcome to your CDK TypeScript project!
+# ice-cream-service
 
-This is a blank project for TypeScript development with CDK.
+Sample AWS Lambda app which demonstrates simple CRUD operations for an ice cream shop.
+It is created by aws-cdk.
 
-The `cdk.json` file tells the CDK Toolkit how to execute your app.
+- [getIceCreams.ts](lib/getIceCreams.ts)
+  - Returns list of ice creams.
+  - Supports querying by name as well.
+- [getIceCreamById.ts](lib/getIceCreams.ts)
+  - Returns an ice cream by id.
+- [createIceCream.ts](lib/createIceCream.ts)
+  - Creates an ice cream.
 
-## Useful commands
-
- * `npm run build`   compile typescript to js
- * `npm run watch`   watch for changes and compile
- * `npm run test`    perform the jest unit tests
- * `cdk deploy`      deploy this stack to your default AWS account/region
- * `cdk diff`        compare deployed stack with current state
- * `cdk synth`       emits the synthesized CloudFormation template
+Sample http requests can be found in [test/integration](/test/integration) folder.
