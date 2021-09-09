@@ -1,17 +1,14 @@
-POST https://ahgmn0au48.execute-api.us-east-1.amazonaws.com/prod/ HTTP/1.1
+POST https://50bw7bq4r6.execute-api.us-east-1.amazonaws.com/prod/icecream HTTP/1.1
 content-type: application/json
 
 {
-    "name": "Vanilla",
+    "name": "Chocolate",
     "ingredients": [
       {
-        "name": "Vaniilla Bean"
+        "name": "Chocolate"
       },
       {
         "name": "Milk"
-      },
-      {
-        "name": "Sugar"
       }
     ]
 }

@@ -1,7 +1,16 @@
 import IceCream from "./iceCream";
 import * as AWS from "aws-sdk";
 import { v4 as uuidv4 } from "uuid";
-import { CognitoUserPoolsAuthorizer } from "@aws-cdk/aws-apigateway";
+import {
+  AttributeMap,
+  ItemList,
+  PutItemInput,
+  PutItemInputAttributeMap,
+  PutRequest,
+} from "aws-sdk/clients/dynamodb";
+import Ingredient from "./ingredient";
+import Order from "./order";
+import OrderItem from "./orderItem";
 
 export default class DynamoIceCreamService {
   private db: AWS.DynamoDB.DocumentClient;
@@ -17,12 +26,15 @@ export default class DynamoIceCreamService {
         .get({
           TableName: "IceCream",
           Key: {
-            id: id,
+            PK: `ICE-CREAM#${id}`,
+            SK: "ICE-CREAM",
           },
         })
         .promise();
       console.log("Item %s is retrieved", item.Item);
-      return Promise.resolve(<IceCream>item.Item);
+      return Promise.resolve(
+        item.Item ? this.toIceCream(item.Item) : undefined
+      );
     } catch (err) {
       console.error(err);
       return Promise.reject(err);
@@ -31,20 +43,22 @@ export default class DynamoIceCreamService {
 
   async getIceCreamsByName(name: string): Promise<IceCream[]> {
     try {
-      let scanOutput = await this.db
+      let queryOutput = await this.db
         .query({
           TableName: "IceCream",
           IndexName: "IceCream-Name-Index",
-          KeyConditionExpression: "#n = :name",
+          KeyConditionExpression: "SK = :sk and begins_with(#n, :name)",
           ExpressionAttributeValues: {
-            ":name": name,
+            ":sk": "ICE-CREAM",
+            ":name": name.toLowerCase(),
           },
           ExpressionAttributeNames: {
-            "#n": "name",
+            "#n": "Name",
           },
         })
         .promise();
-      return Promise.resolve(<IceCream[]>scanOutput.Items);
+
+      return Promise.resolve(this.toIceCreams(queryOutput.Items));
     } catch (err) {
       console.error(err);
       return Promise.reject(err);
@@ -53,17 +67,38 @@ export default class DynamoIceCreamService {
 
   async getIceCreams(): Promise<IceCream[]> {
     try {
-      let scanOutput = await this.db
-        .scan({
+      let queryOutput = await this.db
+        .query({
           TableName: "IceCream",
+          IndexName: "IceCream-Name-Index",
+          KeyConditionExpression: "SK = :sk",
+          ExpressionAttributeValues: {
+            ":sk": "ICE-CREAM",
+          },
         })
         .promise();
-      return Promise.resolve(<IceCream[]>scanOutput.Items);
+      return Promise.resolve(this.toIceCreams(queryOutput.Items));
     } catch (err) {
       console.error(err);
       return Promise.reject(err);
     }
   }
+
+  private toIceCreams(items: undefined | ItemList): IceCream[] {
+    let iceCreams: undefined | IceCream[] = items
+      ? items.map((item) => this.toIceCream(item))
+      : [];
+    return iceCreams;
+  }
+
+  private toIceCream(item: AttributeMap): IceCream {
+    return new IceCream(
+      <string>item.Id,
+      <string>item.Name,
+      <Ingredient[]>item.Ingredients
+    );
+  }
+
   async saveIceCream(iceCream: IceCream): Promise<string> {
     console.log("Creating %s in dynamoDB", iceCream);
     iceCream.id = uuidv4();
@@ -71,7 +106,13 @@ export default class DynamoIceCreamService {
       await this.db
         .put({
           TableName: "IceCream",
-          Item: iceCream,
+          Item: {
+            PK: `ICE-CREAM#${iceCream.id}`,
+            SK: "ICE-CREAM",
+            Id: iceCream.id,
+            Name: iceCream.name.toLowerCase(),
+            Ingredients: iceCream.ingredients,
+          },
         })
         .promise();
       return Promise.resolve(iceCream.id);
@@ -79,5 +120,44 @@ export default class DynamoIceCreamService {
       console.error(err);
       return Promise.reject(err);
     }
+  }
+
+  async saveOrder(order: Order): Promise<String> {
+    order.id = uuidv4();
+    try {
+      await this.db
+        .put({
+          TableName: "IceCream",
+          Item: {
+            PK: `CUSTOMER#${order.customerId}`,
+            SK: `ORDER#${order.id}`,
+          },
+        })
+        .promise();
+    } catch (err) {
+      console.error(err);
+      return Promise.reject(err);
+    }
+
+    for (let orderItem of order.orderItems) {
+      try {
+        await this.db
+          .put({
+            TableName: "IceCream",
+            Item: {
+              PK: `ORDER#${order.id}`,
+              SK: `ICE-CREAM#${orderItem.itemId}`,
+              Quantity: orderItem.quantity,
+              UnitPrice: orderItem.unitPrice,
+            },
+          })
+          .promise();
+      } catch (err) {
+        console.error(err);
+        return Promise.reject(err);
+      }
+    }
+
+    return Promise.resolve(order.id);
   }
 }

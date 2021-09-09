@@ -1,0 +1,18 @@
+POST https://50bw7bq4r6.execute-api.us-east-1.amazonaws.com/prod/order HTTP/1.1
+content-type: application/json
+
+{
+    "customerId": "customer-1",
+    "orderItems": [
+        {
+            "itemId": "52de369c-e135-4478-831f-16a3925b0c6c",
+            "quantity": 1,
+            "unitPrice": 1.50
+        },
+        {
+            "itemId": "ed0335e2-ccb6-4182-a0d1-151a0fba8b2b",
+            "quantity": 1,
+            "unitPrice": 0.75
+        }
+    ]
+}

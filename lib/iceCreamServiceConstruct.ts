@@ -35,54 +35,69 @@ export class IceCreamServiceConstruct extends core.Construct {
       }
     );
 
+    const createOrderHandler = new lambdaNodeJs.NodejsFunction(
+      this,
+      "createOrder",
+      {
+        entry: "./lib/createOrder.ts",
+      }
+    );
+
     const api = new apigateway.RestApi(this, "ice-cream-service-api", {
       restApiName: "Ice Cream Service",
       description: "This service serves ice creams.",
     });
 
     const getIceCreamsIntegration = new apigateway.LambdaIntegration(
-      getIceCreamsHandler,
-      {
-        requestTemplates: { "application/json": '{ "statusCode": "200" }' },
-      }
+      getIceCreamsHandler
     );
 
     const getIceCreamByIdIntegration = new apigateway.LambdaIntegration(
       getIceCreamByIdHandler
     );
 
-    const createIceCreamByIdIntegration = new apigateway.LambdaIntegration(
+    const createIceCreamIntegration = new apigateway.LambdaIntegration(
       createIceCreamHandler
+    );
+
+    const createOrderIntegration = new apigateway.LambdaIntegration(
+      createOrderHandler
     );
 
     table.grantReadData(getIceCreamsHandler);
     table.grantReadData(getIceCreamByIdHandler);
     table.grantWriteData(createIceCreamHandler);
+    table.grantWriteData(createOrderHandler);
 
     // get all or by name
-    api.root.addMethod("GET", getIceCreamsIntegration);
+    let iceCreamResource = api.root.addResource("icecream");
+    iceCreamResource.addMethod("GET", getIceCreamsIntegration);
 
     // post ice cream
-    api.root.addMethod("POST", createIceCreamByIdIntegration);
+    iceCreamResource.addMethod("POST", createIceCreamIntegration);
 
     // get by id
-    const iceCreamResource = api.root.addResource("{id}");
-    iceCreamResource.addMethod("GET", getIceCreamByIdIntegration);
+    const iceCreamResourceById = iceCreamResource.addResource("{id}");
+    iceCreamResourceById.addMethod("GET", getIceCreamByIdIntegration);
+
+    // post order
+    let orderResource = api.root.addResource("order");
+    orderResource.addMethod("POST", createOrderIntegration);
   }
 
   private createDatabase(): dynamodb.Table {
     const iceCreamTable = new dynamodb.Table(this, "ice-cream-table", {
       tableName: "IceCream",
       billingMode: dynamodb.BillingMode.PROVISIONED,
-      readCapacity: 1,
-      writeCapacity: 1,
-      partitionKey: { name: "id", type: dynamodb.AttributeType.STRING },
+      partitionKey: { name: "PK", type: dynamodb.AttributeType.STRING },
+      sortKey: { name: "SK", type: dynamodb.AttributeType.STRING },
     });
 
-    // 👇 add local secondary index
+    // add global secondary index
     iceCreamTable.addGlobalSecondaryIndex({
       indexName: "IceCream-Name-Index",
-      partitionKey: { name: "name", type: dynamodb.AttributeType.STRING },
+      partitionKey: { name: "SK", type: dynamodb.AttributeType.STRING },
+      sortKey: { name: "Name", type: dynamodb.AttributeType.STRING },
       projectionType: dynamodb.ProjectionType.ALL,
     });
 
