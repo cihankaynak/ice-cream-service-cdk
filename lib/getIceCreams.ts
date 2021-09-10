@@ -1,9 +1,10 @@
 import { APIGatewayProxyEvent, APIGatewayProxyResult } from "aws-lambda";
 import IceCream from "./iceCream";
 import DynamoIceCreamService from "./dynamoIceCreamService";
-import * as AWS from "aws-sdk";
+import { DynamoDBDocument } from "@aws-sdk/lib-dynamodb";
+import { DynamoDB } from "@aws-sdk/client-dynamodb";
 
-const db = new AWS.DynamoDB.DocumentClient();
+const db = DynamoDBDocument.from(new DynamoDB({}));
 
 export const handler = async (
   event: APIGatewayProxyEvent

@@ -2,10 +2,10 @@ POST https://50bw7bq4r6.execute-api.us-east-1.amazonaws.com/prod/icecream HTTP/1
 content-type: application/json
 
 {
-    "name": "Chocolate",
+    "name": "Coconut",
     "ingredients": [
       {
-        "name": "Chocolate"
+        "name": "Cocunut"
       },
       {
         "name": "Milk"
